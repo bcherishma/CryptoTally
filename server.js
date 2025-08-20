@@ -42,4 +42,27 @@ app.post('/register',(req,res) => {
         nullifier,
         merkleRoot
     };
-})
+
+    updateMerkleRootOnContract(merkleRoot);
+    console.log(`Voter ${voterId} registered.Merkle root updated.`);
+
+    res.json({message:'Voter registered successfully.', merkleRoot});
+});
+
+app.get('/voter/:voterId',(req,res) => {
+    const {voterId} = req.params;
+    const voter = registeredVoters[voterId];
+    if(!voter) {
+        return res.status(404).send('Voter not found.');
+    }
+    res.json({
+        privateKey: voter.privateKey,
+        nullifier: voter.nullifier,
+        merkleProof,
+        merklrRoot: tree.getHexRoot(),
+    });
+});
+
+app.listen(PORT,() => {
+    console.log(`AegisVote backend server running on http://localhost:${PORT}`);
+});
