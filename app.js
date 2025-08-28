@@ -122,4 +122,80 @@ const App = () => {
     const[vote,setVote] = useState('');
     const[status,setStatus] = useState('');
     const[voterData,setVoterData] = useState(null);
-}
+
+    const handleLogin  = async () => {
+        setStatus('Fetching Voter Data . . .');
+        try {
+          const response = await fetch('http://localhost:3001/voter/${voterId}');
+          if (!response.ok) throw new Error('Voter Not Found');
+          const data = await response.json();
+          setVoterData(data);
+          setStatus('Voter data loaded.Ready to Vote.');
+        } catch(error) {
+          setStatus('Error: ${error.message}');
+        }
+    }; 
+    const handleVote = async () => {
+        if(!boterData || !vote)
+        {
+          setStatus('Please log in and select a candidate.');
+          return;
+        }
+        setStatus('Generating Zero-Knowledge Proof . . .');
+        try {
+          const {proof,publicSignals} = await generateZKP(voterData,vote);
+          setStatus('Proof generated. Submitting transaction . . .');
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          const signer = provider.getSigner();
+          const votingContract = new ethers.Contract(contractAddress,VotingContract.abi,signer);
+
+          const tx = await votingContract.castVote(
+            proof.pi_a,
+            proof.pi_b,
+            proof.pi_c,
+            publicSignals,
+            voterData.nullifier
+          );
+          setsStatus('Transaction sent: ${tx.hash}.Waiting for confirmation . . .');
+          await tx.wait();
+          setStatus('Vote successfully cast! Thank you for voting.');
+        } catch(error) {
+          setStatus('Error during voting: ${error.message}');
+          console.error(error);
+        }
+    };
+    return (
+      <div style={appStyles.container}>
+          <div style={appStyles.card}>
+              <h1 style={appStyles.title}>CryptoTally</h1>
+              <h2 style={appStyles.heading}>E-Voting System</h2>
+              {!voterData ? (
+                  <div>
+                      <p>Enter your unique Voter ID to securely access the system.</p>
+                      <input
+                          type="text"
+                          style={appStyles.input}
+                          placeholder="e.g., voter123"
+                          value={voterId}
+                          onChange={(e) => setVoterId(e.target.value)}
+                      />
+                      <button style={appStyles.button} onClick={handleLogin}>Log In & Verify</button>
+                  </div>
+              ) : (
+                  <div>
+                      <p>Welcome, Voter {voterId}! Your eligibility has been confirmed. You may now cast your vote anonymously.</p>
+                      <p style={appStyles.selection}>Select your candidate:</p>
+                      <button style={appStyles.button} onClick={() => setVote('A')}>Candidate A</button>
+                      <button style={appStyles.button} onClick={() => setVote('B')}>Candidate B</button>
+                      <p style={appStyles.selection}>Your selection: <strong>{vote || 'None'}</strong></p>
+                      <button style={appStyles.button} onClick={handleVote}>Cast Vote Anonymously</button>
+                  </div>
+              )}
+              <p style={appStyles.status}>Status: {status}</p>
+          </div>
+      </div>
+  );
+};
+
+export default App;
