@@ -1,41 +1,21 @@
-import type { HardhatUserConfig } from "hardhat/config";
-
-import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
-import { configVariable } from "hardhat/config";
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-ethers"; // Explicitly importing hardhat-ethers
 
 const config: HardhatUserConfig = {
-  plugins: [hardhatToolboxViemPlugin],
-  solidity: {
-    profiles: {
-      default: {
-        version: "0.8.28",
-      },
-      production: {
-        version: "0.8.28",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
+  solidity: "0.8.28",
+  networks: {
+    sepolia: {
+      // You'll need to configure this network with your own details.
+      // This is a placeholder.
+      url: process.env.SEPOLIA_RPC_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },
-  networks: {
-    hardhatMainnet: {
-      type: "edr-simulated",
-      chainType: "l1",
-    },
-    hardhatOp: {
-      type: "edr-simulated",
-      chainType: "op",
-    },
-    sepolia: {
-      type: "http",
-      chainType: "l1",
-      url: configVariable("SEPOLIA_RPC_URL"),
-      accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
-    },
+  etherscan: {
+    // You'll need to configure this with your own Etherscan API key.
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
   },
 };
 

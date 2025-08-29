@@ -15,12 +15,13 @@ contract Voting{
     mapping(bytes32=>bool) public usedNullifiers;
     bytes32[] public encryptedVotes;
     event VoteCasted(bytes32 indexed _nullifier,bytes32 _encryptedVote);
+
     constructor(bytes32 _initialMerkleRoot,address _verifierAddress){
         voterMerkleRoot = _initialMerkleRoot;
-        verifier = IVerifier(_verifierAddress)
+        verifier = IVerifier(_verifierAddress);
     }
     function updateVoters(bytes32 newRoot) public{
-        votersMerkleRoot = newRoot;
+        voterMerkleRoot = newRoot;
     }
     function castVote(
         uint[2] memory _proofA,
